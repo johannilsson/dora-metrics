@@ -27,20 +27,12 @@ You can run the script using `uvx`, which will execute the command in a temporar
 cat data.csv | uvx --from <path to package> dora
 ```
 
-#### 1. Calculate DORA Metrics (Default Mode)
+#### Calculate DORA Metrics (Default Mode)
 
 To calculate and display DORA metrics:
 
 ```bash
 cat data.csv | dora
-```
-
-#### 2. Generate Markdown List of Releases
-
-To output a simple markdown-formatted list of all releases per application:
-
-```bash
-cat data.csv | dora --markdown-list
 ```
 
 ### Output
