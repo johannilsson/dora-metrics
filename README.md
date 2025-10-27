@@ -6,6 +6,33 @@ This script calculates key DORA (DevOps Research and Assessment) metrics: Deploy
 
 The script expects CSV data piped to its standard input. The CSV must contain the following columns: `app name`, `version`, and `publication date`.
 
+## Development
+
+### Setup
+
+To set up the development environment, install the project in editable mode with its development dependencies:
+
+```bash
+uv pip install -e ".[dev]"
+```
+
+### Linting and Formatting
+
+This project uses `ruff` for linting and formatting.
+
+To check for linting issues, run:
+
+```bash
+uv run ruff check .
+```
+
+To automatically fix issues and format the code, run:
+
+```bash
+uv run ruff check . --fix
+uv run ruff format .
+```
+
 ### Example CSV Input (`data.csv`):
 
 ```csv

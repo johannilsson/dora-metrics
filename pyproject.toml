@@ -6,8 +6,20 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = []
 
+[project.optional-dependencies]
+dev = ["ruff"]
+
 [project.scripts]
 dora = "dora.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "B", "N", "UP"]
+
+[tool.ruff.format]
+quote-style = "double"

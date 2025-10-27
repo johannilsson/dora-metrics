@@ -30,10 +30,11 @@
 # - YYYY-MM-DD (e.g., "2024-06-01")
 # - YYYYMMDD (e.g., "20240601")
 #
-import sys
 import csv
 import re
+import sys
 from datetime import datetime
+
 
 def parse_version(version_str):
     """
@@ -56,7 +57,7 @@ def parse_publication_date(date_str):
     Returns a datetime object or None if parsing fails.
     """
     s_date_str = str(date_str)
-    
+
     date_pattern_text = r'(\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},\s+\d{4})'
     match = re.search(date_pattern_text, s_date_str, re.IGNORECASE)
     if match:
@@ -74,7 +75,7 @@ def parse_publication_date(date_str):
             return datetime.strptime(match.group(1), '%Y-%m-%d')
         except ValueError:
             pass
-            
+
     date_pattern_compact = r'\b(\d{8})\b'
     match = re.search(date_pattern_compact, s_date_str)
     if match:
@@ -91,11 +92,11 @@ def format_timedelta_human(total_seconds):
     """
     if total_seconds < 0:
         return "N/A"
-        
+
     days, remainder = divmod(total_seconds, 86400)
     hours, remainder = divmod(remainder, 3600)
     minutes, _ = divmod(remainder, 60)
-    
+
     parts = []
     if days > 0:
         parts.append(f"{int(days)} day{'s' if days != 1 else ''}")
@@ -103,10 +104,10 @@ def format_timedelta_human(total_seconds):
         parts.append(f"{int(hours)} hour{'s' if hours != 1 else ''}")
     if minutes > 0:
         parts.append(f"{int(minutes)} minute{'s' if minutes != 1 else ''}")
-        
+
     if not parts:
         return "Less than a minute"
-        
+
     return ", ".join(parts)
 
 def print_dora_metrics(apps_data):
@@ -116,7 +117,7 @@ def print_dora_metrics(apps_data):
     for app_name, releases in sorted(apps_data.items()):
         if not releases:
             continue
-        
+
         # Data is pre-sorted, but we confirm it here.
         releases.sort(key=lambda r: r['date'])
         num_releases = len(releases)
@@ -138,7 +139,7 @@ def print_dora_metrics(apps_data):
                     'failed_change': current_release,
                     'fix': next_release
                 })
-        
+
         # 1. Release Frequency
         print("-> Release Frequency:")
         if num_releases < 2:
@@ -158,8 +159,11 @@ def print_dora_metrics(apps_data):
         num_failed_changes = len(failure_events)
         if num_releases > 0:
             failure_rate = (num_failed_changes / num_releases) * 100
-            print(f"   {failure_rate:.2f}% ({num_failed_changes} change{'s' if num_failed_changes != 1 else ''} required a hotfix "
-                  f"out of {num_releases} total releases)")
+            details = (
+                f"({num_failed_changes} change{'s' if num_failed_changes != 1 else ''} required a hotfix "
+                f"out of {num_releases} total releases)"
+            )
+            print(f"   {failure_rate:.2f}% {details}")
             if failure_events:
                 print("   Changes that failed (and their subsequent fix):")
                 for event in failure_events:
@@ -199,7 +203,7 @@ def print_markdown_list(apps_data):
     for app_name, releases in sorted(apps_data.items()):
         if not releases:
             continue
-        
+
         releases.sort(key=lambda r: r['date'])
 
         print(f"### {app_name}\n")
@@ -219,11 +223,11 @@ def main():
         sys.exit(1)
 
     markdown_mode = '--markdown-list' in sys.argv
-    
+
     try:
         reader = csv.DictReader(sys.stdin)
         reader.fieldnames = [h.lower() for h in reader.fieldnames]
-        
+
         apps_data = {}
 
         for row in reader:
@@ -246,13 +250,13 @@ def main():
 
             if app_name not in apps_data:
                 apps_data[app_name] = []
-            
+
             apps_data[app_name].append({
                 'version': version,
                 'date': pub_date,
             })
 
-    except (IOError, csv.Error) as e:
+    except (OSError, csv.Error) as e:
         sys.stderr.write(f"Error reading or parsing CSV from stdin: {e}\n")
         sys.exit(1)
 
