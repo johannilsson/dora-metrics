@@ -34,3 +34,50 @@ To output a simple markdown-formatted list of all releases per application:
 ```bash
 cat data.csv | dora --markdown-list
 ```
+
+### Output
+
+```
+######################################
+### Metrics for App: AppA
+######################################
+Total Releases: 3
+
+-> Release Frequency:
+   Average time between releases: 7.00 days
+   Releases included in calculation:
+   - v1.0.0 on 2024-01-01
+   - v1.0.1 on 2024-01-05
+   - v1.1.0 on 2024-01-15
+
+-> Change Failure Rate:
+   33.33% (1 change required a hotfix out of 3 total releases)
+   Changes that failed (and their subsequent fix):
+   - Change v1.0.0 (2024-01-01) failed, fixed by v1.0.1 (2024-01-05)
+
+-> Mean Time to Recover (MTTR):
+   Average: 4 days
+   Recovery periods included in calculation:
+   - From v1.0.0 (2024-01-01) to v1.0.1 (2024-01-05): 4 days
+
+######################################
+### Metrics for App: AppB
+######################################
+Total Releases: 2
+
+-> Release Frequency:
+   Average time between releases: 1.00 days
+   Releases included in calculation:
+   - v2.0.0 on 2024-02-01
+   - v2.0.1 on 2024-02-02
+
+-> Change Failure Rate:
+   50.00% (1 change required a hotfix out of 2 total releases)
+   Changes that failed (and their subsequent fix):
+   - Change v2.0.0 (2024-02-01) failed, fixed by v2.0.1 (2024-02-02)
+
+-> Mean Time to Recover (MTTR):
+   Average: 1 day
+   Recovery periods included in calculation:
+   - From v2.0.0 (2024-02-01) to v2.0.1 (2024-02-02): 1 day
+```
