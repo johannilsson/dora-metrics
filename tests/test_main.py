@@ -8,6 +8,7 @@ from dora.__main__ import (
     parse_version,
     parse_publication_date,
     format_timedelta_human,
+    calculate_dora_metrics,
     print_dora_metrics,
     print_markdown_list,
     main,
@@ -99,46 +100,38 @@ class TestDoraMain(unittest.TestCase):
         self.assertIn("Error: No data piped to stdin.", output)
 
 class TestDoraMetricsCalculation(unittest.TestCase):
-    def run_main_with_data(self, csv_data):
-        with patch('sys.stdin', StringIO(csv_data)), \
-             patch('sys.stdout', new_callable=StringIO) as mock_stdout:
-            main()
-            return mock_stdout.getvalue()
-
     def test_release_frequency(self):
-        csv_data = (
-            "app name,version,publication date\n"
-            "AppA,v1.0.0,2024-01-01\n"
-            "AppA,v1.1.0,2024-01-11\n"
-        )
-        output = self.run_main_with_data(csv_data)
-        self.assertIn("Average time between releases: 10.00 days", output)
+        releases = [
+            {"version": (1, 0, 0), "date": datetime(2024, 1, 1)},
+            {"version": (1, 1, 0), "date": datetime(2024, 1, 11)},
+        ]
+        metrics = calculate_dora_metrics(releases)
+        self.assertAlmostEqual(metrics["avg_days_between_releases"], 10.0)
 
     def test_change_failure_rate(self):
-        csv_data = (
-            "app name,version,publication date\n"
-            "AppA,v1.0.0,2024-01-01\n"
-            "AppA,v1.0.1,2024-01-02\n" # Failure 1
-            "AppA,v1.1.0,2024-01-10\n"
-            "AppA,v1.2.0,2024-01-20\n"
-            "AppA,v1.2.1,2024-01-21\n" # Failure 2
-        )
-        output = self.run_main_with_data(csv_data)
-        # 2 failures out of 5 releases = 40%
-        self.assertIn("40.00% (2 changes required a hotfix out of 5 total releases)", output)
+        releases = [
+            {"version": (1, 0, 0), "date": datetime(2024, 1, 1)},
+            {"version": (1, 0, 1), "date": datetime(2024, 1, 2)},
+            {"version": (1, 1, 0), "date": datetime(2024, 1, 10)},
+            {"version": (1, 2, 0), "date": datetime(2024, 1, 20)},
+            {"version": (1, 2, 1), "date": datetime(2024, 1, 21)},
+        ]
+        metrics = calculate_dora_metrics(releases)
+        self.assertAlmostEqual(metrics["failure_rate"], 40.0)
+        self.assertEqual(len(metrics["failure_events"]), 2)
 
     def test_mean_time_to_recover(self):
-        csv_data = (
-            "app name,version,publication date\n"
-            "AppA,v1.0.0,2024-01-01\n"
-            "AppA,v1.0.1,2024-01-03\n" # 2 days to recover
-            "AppA,v1.1.0,2024-01-10\n"
-            "AppA,v1.2.0,2024-01-20\n"
-            "AppA,v1.2.1,2024-01-24\n" # 4 days to recover
-        )
-        output = self.run_main_with_data(csv_data)
-        # Average of 2 and 4 days is 3 days
-        self.assertIn("Average: 3 days", output)
+        releases = [
+            {"version": (1, 0, 0), "date": datetime(2024, 1, 1)},
+            {"version": (1, 0, 1), "date": datetime(2024, 1, 3)},  # 2 days
+            {"version": (1, 1, 0), "date": datetime(2024, 1, 10)},
+            {"version": (1, 2, 0), "date": datetime(2024, 1, 20)},
+            {"version": (1, 2, 1), "date": datetime(2024, 1, 24)},  # 4 days
+        ]
+        metrics = calculate_dora_metrics(releases)
+        # Average of 2 and 4 days is 3 days = 259200 seconds
+        self.assertAlmostEqual(metrics["avg_recovery_seconds"], 259200)
+
 
 if __name__ == "__main__":
     unittest.main()

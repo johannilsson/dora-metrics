@@ -110,91 +110,118 @@ def format_timedelta_human(total_seconds):
 
     return ", ".join(parts)
 
+def calculate_dora_metrics(releases):
+    """
+    Calculates DORA metrics for a list of releases.
+    """
+    num_releases = len(releases)
+    if num_releases == 0:
+        return None
+
+    releases.sort(key=lambda r: r["date"])
+
+    # --- Identify Failure and Recovery Events ---
+    failure_events = []
+    for i in range(num_releases - 1):
+        current_release = releases[i]
+        next_release = releases[i + 1]
+        v_curr = current_release["version"]
+        v_next = next_release["version"]
+        if v_next[0] == v_curr[0] and v_next[1] == v_curr[1] and v_next[2] > v_curr[2]:
+            failure_events.append({"failed_change": current_release, "fix": next_release})
+
+    # 1. Release Frequency
+    avg_days_between_releases = None
+    if num_releases >= 2:
+        total_duration = releases[-1]["date"] - releases[0]["date"]
+        avg_days_between_releases = total_duration.days / (num_releases - 1)
+
+    # 2. Change Failure Rate
+    num_failed_changes = len(failure_events)
+    failure_rate = (num_failed_changes / num_releases) * 100 if num_releases > 0 else 0
+
+    # 3. Mean Time to Recover (MTTR)
+    avg_recovery_seconds = None
+    if failure_events:
+        recovery_times_seconds = [
+            (event["fix"]["date"] - event["failed_change"]["date"]).total_seconds() for event in failure_events
+        ]
+        avg_recovery_seconds = sum(recovery_times_seconds) / len(recovery_times_seconds)
+
+    return {
+        "num_releases": num_releases,
+        "failure_events": failure_events,
+        "avg_days_between_releases": avg_days_between_releases,
+        "failure_rate": failure_rate,
+        "avg_recovery_seconds": avg_recovery_seconds,
+    }
+
+
 def print_dora_metrics(apps_data):
     """
     Calculates and prints the detailed DORA metrics report for each app.
     """
     for app_name, releases in sorted(apps_data.items()):
-        if not releases:
+        metrics = calculate_dora_metrics(releases)
+        if not metrics:
             continue
 
-        # Data is pre-sorted, but we confirm it here.
-        releases.sort(key=lambda r: r['date'])
-        num_releases = len(releases)
+        num_releases = metrics["num_releases"]
+        failure_events = metrics["failure_events"]
 
         print("\n" + "#" * 38)
         print(f"### Metrics for App: {app_name}")
         print("#" * 38)
         print(f"Total Releases: {num_releases}\n")
 
-        # --- Identify Failure and Recovery Events ---
-        failure_events = []
-        for i in range(num_releases - 1):
-            current_release = releases[i]
-            next_release = releases[i+1]
-            v_curr = current_release['version']
-            v_next = next_release['version']
-            if v_next[0] == v_curr[0] and v_next[1] == v_curr[1] and v_next[2] > v_curr[2]:
-                failure_events.append({
-                    'failed_change': current_release,
-                    'fix': next_release
-                })
-
         # 1. Release Frequency
         print("-> Release Frequency:")
-        if num_releases < 2:
+        if metrics["avg_days_between_releases"] is None:
             print("   Not enough data to calculate frequency.")
         else:
-            total_duration = releases[-1]['date'] - releases[0]['date']
-            avg_days_between_releases = total_duration.days / (num_releases - 1)
-            print(f"   Average time between releases: {avg_days_between_releases:.2f} days")
+            print(f"   Average time between releases: {metrics['avg_days_between_releases']:.2f} days")
             print("   Releases included in calculation:")
             for r in releases:
-                version_str = '.'.join(map(str, r['version']))
-                date_str = r['date'].strftime('%Y-%m-%d')
+                version_str = ".".join(map(str, r["version"]))
+                date_str = r["date"].strftime("%Y-%m-%d")
                 print(f"   - v{version_str} on {date_str}")
 
         # 2. Change Failure Rate
         print("\n-> Change Failure Rate:")
         num_failed_changes = len(failure_events)
         if num_releases > 0:
-            failure_rate = (num_failed_changes / num_releases) * 100
             details = (
                 f"({num_failed_changes} change{'s' if num_failed_changes != 1 else ''} required a hotfix "
                 f"out of {num_releases} total releases)"
             )
-            print(f"   {failure_rate:.2f}% {details}")
+            print(f"   {metrics['failure_rate']:.2f}% {details}")
             if failure_events:
                 print("   Changes that failed (and their subsequent fix):")
                 for event in failure_events:
-                    fail_v = '.'.join(map(str, event['failed_change']['version']))
-                    fail_d = event['failed_change']['date'].strftime('%Y-%m-%d')
-                    fix_v = '.'.join(map(str, event['fix']['version']))
-                    fix_d = event['fix']['date'].strftime('%Y-%m-%d')
+                    fail_v = ".".join(map(str, event["failed_change"]["version"]))
+                    fail_d = event["failed_change"]["date"].strftime("%Y-%m-%d")
+                    fix_v = ".".join(map(str, event["fix"]["version"]))
+                    fix_d = event["fix"]["date"].strftime("%Y-%m-%d")
                     print(f"   - Change v{fail_v} ({fail_d}) failed, fixed by v{fix_v} ({fix_d})")
         else:
             print("   No releases found.")
 
         # 3. Mean Time to Recover (MTTR)
         print("\n-> Mean Time to Recover (MTTR):")
-        if not failure_events:
+        if metrics["avg_recovery_seconds"] is None:
             print("   Not applicable (no failed changes recorded)")
         else:
-            recovery_times_seconds = [
-                (event['fix']['date'] - event['failed_change']['date']).total_seconds()
-                for event in failure_events
-            ]
-            avg_recovery_seconds = sum(recovery_times_seconds) / len(recovery_times_seconds)
-            print(f"   Average: {format_timedelta_human(avg_recovery_seconds)}")
+            print(f"   Average: {format_timedelta_human(metrics['avg_recovery_seconds'])}")
             print("   Recovery periods included in calculation:")
             for event in failure_events:
-                fail_v = '.'.join(map(str, event['failed_change']['version']))
-                fail_d = event['failed_change']['date'].strftime('%Y-%m-%d')
-                fix_v = '.'.join(map(str, event['fix']['version']))
-                fix_d = event['fix']['date'].strftime('%Y-%m-%d')
-                duration = event['fix']['date'] - event['failed_change']['date']
+                fail_v = ".".join(map(str, event["failed_change"]["version"]))
+                fail_d = event["failed_change"]["date"].strftime("%Y-%m-%d")
+                fix_v = ".".join(map(str, event["fix"]["version"]))
+                fix_d = event["fix"]["date"].strftime("%Y-%m-%d")
+                duration = event["fix"]["date"] - event["failed_change"]["date"]
                 duration_str = format_timedelta_human(duration.total_seconds())
                 print(f"   - From v{fail_v} ({fail_d}) to v{fix_v} ({fix_d}): {duration_str}")
+
 
 def print_markdown_list(apps_data):
     """
