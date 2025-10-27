@@ -1,0 +1,23 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyd
+*.pyo
+*.egg-info/
+.eggs/
+
+# Distribution / packaging
+.venv/
+build/
+dist/
+*.egg
+*.whl
+
+# Editors
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+.env
+uv.lock

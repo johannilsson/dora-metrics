@@ -1,0 +1,13 @@
+[project]
+name = "dora"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+dora = "dora.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
