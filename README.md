@@ -33,6 +33,14 @@ uv run ruff check . --fix
 uv run ruff format .
 ```
 
+### Testing
+
+To run the unit tests, use `pytest`:
+
+```bash
+uv run pytest
+```
+
 ### Example CSV Input (`data.csv`):
 
 ```csv
