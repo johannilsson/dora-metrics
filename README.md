@@ -24,7 +24,7 @@ AppB,v2.0.1,2024-02-02
 To calculate and display DORA metrics:
 
 ```bash
-cat data.csv | python dora.py
+cat data.csv | dora
 ```
 
 #### 2. Generate Markdown List of Releases
@@ -32,5 +32,5 @@ cat data.csv | python dora.py
 To output a simple markdown-formatted list of all releases per application:
 
 ```bash
-cat data.csv | python dora.py --markdown-list
+cat data.csv | dora --markdown-list
 ```
