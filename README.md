@@ -1,5 +1,7 @@
 # DORA Metrics Calculator
 
+DORA (DevOps Research and Assessment) metrics are a set of industry-standard benchmarks used to measure the performance of a software development and delivery process. They provide key insights into a team's ability to deliver software with both speed and stability. By tracking these metrics, teams can identify areas for improvement, make data-driven decisions, and ultimately enhance their DevOps capabilities.
+
 This script calculates key DORA (DevOps Research and Assessment) metrics: Deployment Frequency, Change Failure Rate, and Mean Time to Recover. It processes release data from a CSV file provided via standard input.
 
 ## Usage
