@@ -26,10 +26,10 @@ AppB,v2.0.1,2024-02-02
 You can run the script using `uvx`, which will execute the command in a temporary virtual environment. Remember to use `--from` to ensure `uvx` can find the `dora` package.
 
 ```bash
-cat data.csv | uvx --from <path to package> dora
+cat data.csv | uvx --from git+https://github.com/johannilsson/dora-metrics dora
 ```
 
-#### Calculate DORA Metrics (Default Mode)
+#### Calculate DORA Metrics
 
 To calculate and display DORA metrics:
 
